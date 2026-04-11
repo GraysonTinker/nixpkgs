@@ -10312,14 +10312,6 @@ with pkgs;
   rsync = callPackage ../applications/networking/sync/rsync (config.rsync or { });
   rrsync = callPackage ../applications/networking/sync/rsync/rrsync.nix { };
 
-  inherit (callPackages ../applications/radio/rtl-sdr { })
-    rtl-sdr-librtlsdr
-    rtl-sdr-osmocom
-    rtl-sdr-blog
-    ;
-
-  rtl-sdr = rtl-sdr-blog;
-
   rusty-psn-gui = rusty-psn.override { withGui = true; };
 
   scantailor-advanced = callPackage ../applications/graphics/scantailor/advanced.nix { };
