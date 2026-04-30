@@ -7,30 +7,25 @@
 # - https://github.com/psychicEgg/EDHM/blob/main/REDISTRIBUTION_EXCEPTION.md
 {
   lib,
-  stdenv,
+  stdenvNoCC,
   fetchzip,
   autoPatchelfHook,
   unzip,
   makeDesktopItem,
   copyDesktopItems,
-  makeWrapper,
   alsa-lib,
-  at-spi2-atk,
-  cups,
-  dbus,
-  glib,
+  electron-bin,
   gtk3,
   libgbm,
-  libglvnd,
   nss,
-  vivaldi-ffmpeg-codecs,
 }:
 
-stdenv.mkDerivation (finalAttrs: {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "edhm-ui";
   version = "3.0.64";
 
   strictDeps = true;
+  __structuredAttrs = true;
 
   src = fetchzip {
     url = "https://github.com/BlueMystical/EDHM_UI/releases/download/v${finalAttrs.version}/edhm-ui-v3-linux-x64.zip";
@@ -41,23 +36,13 @@ stdenv.mkDerivation (finalAttrs: {
     autoPatchelfHook
     unzip
     copyDesktopItems
-    makeWrapper
   ];
 
   buildInputs = [
     alsa-lib
-    at-spi2-atk
-    cups
-    dbus
-    glib
     gtk3
     libgbm
     nss
-    vivaldi-ffmpeg-codecs
-  ];
-
-  runtimeDependencies = [
-    libglvnd
   ];
 
   desktopItems = [
@@ -80,28 +65,21 @@ stdenv.mkDerivation (finalAttrs: {
 
     mkdir -p $out/opt/edhm-ui
 
-    install -Dm755 edhm-ui-v3 $out/opt/edhm-ui/edhm-ui-v3
+    # Symlink everything from electron to begin
+    ln -s ${electron-bin}/libexec/electron/* $out/opt/edhm-ui
 
-    # Copy essential Electron runtime files
-    cp chrome-sandbox chrome_crashpad_handler $out/opt/edhm-ui/
-    cp *.pak *.bin *.dat snapshot_blob.bin v8_context_snapshot.bin $out/opt/edhm-ui/
+    # Remove non-generics
+    rm $out/opt/edhm-ui/{*.bin,icudtl.dat,resources.pak,resources,locales}
+    rm $out/opt/edhm-ui/electron # Source doesn't come with this
 
-    # Copy application resources
-    cp -r resources $out/opt/edhm-ui/
-
-    # Copy all locales (international support)
-    cp -r locales $out/opt/edhm-ui/
-
-    wrapProgram $out/opt/edhm-ui/edhm-ui-v3 \
-      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ libglvnd ]} # For libGL.so
+    # Copy application-specific resources
+    install -m755 edhm-ui-v3 $out/opt/edhm-ui/edhm-ui-v3
+    cp *.bin icudtl.dat resources.pak $out/opt/edhm-ui
+    cp -r resources locales $out/opt/edhm-ui
 
     # Create symlink
     mkdir -p $out/bin
     ln -s $out/opt/edhm-ui/edhm-ui-v3 $out/bin/edhm-ui
-
-    # Copy libraries needed for color previews. The versions from libglvnd don't work.
-    cp libGLESv2.so $out/opt/edhm-ui/libGLESv2.so
-    cp libEGL.so $out/opt/edhm-ui/libEGL.so
 
     # Install icon
     install -Dm644 $out/opt/edhm-ui/resources/images/icon.png $out/share/icons/hicolor/256x256/apps/edhm-ui.png
