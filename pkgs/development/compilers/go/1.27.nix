@@ -61,7 +61,6 @@ stdenv.mkDerivation (finalAttrs: {
       inherit tzdata;
     })
     ./remove-tools-1.11.patch
-    ./go_no_vendor_checks-1.27.patch
     ./go-env-go_ldso.patch
   ];
 
